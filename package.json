@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/t3hmun/t3hssg/issues"
   },
-  "homepage": "https://github.com/t3hmun/t3hssg#readme"
+  "homepage": "https://github.com/t3hmun/t3hssg#readme",
+  "devDependencies": {
+    "prettier": "^2.2.1"
+  }
 }
