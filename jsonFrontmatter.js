@@ -1,4 +1,4 @@
-function separateJsonAndDocument(md) {
+module.exports.jsonEndIndex = (md) => {
   let openBraces = 0;
   let finalBraceIndex = 0;
   let escaped = false;
@@ -28,9 +28,5 @@ function separateJsonAndDocument(md) {
     );
   }
 
-  const json = md.slice(0, finalBraceIndex + 1);
-  const document = md.slice(finalBraceIndex + 1);
-  return { json: json, document: document };
-}
-
-module.exports.separateJsonAndDocument = separateJsonAndDocument;
+  return finalBraceIndex;
+};
