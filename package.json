@@ -18,5 +18,9 @@
   "homepage": "https://github.com/t3hmun/t3hssg#readme",
   "devDependencies": {
     "prettier": "^2.2.1"
+  },
+  "dependencies": {
+    "highlight.js": "^10.5.0",
+    "markdown-it": "^12.0.4"
   }
 }
