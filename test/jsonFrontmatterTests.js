@@ -3,7 +3,7 @@ const chai = require("chai");
 const expect = chai.expect;
 const should = chai.should();
 
-const jsonFrontmatter = require("../jsonFrontmatter.js");
+const jsonFrontmatter = require("../parsers/jsonFrontmatter.js");
 
 describe("jsonFronmatter jsonEndIndex", () => {
   const tests = [

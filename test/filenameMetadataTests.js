@@ -1,7 +1,7 @@
 const chai = require("chai");
 const should = chai.should();
 
-const filenameMetadata = require("../filenameMetadata.js");
+const filenameMetadata = require("../parsers/filenameMetadata.js");
 
 describe(`filenameMetadata extractMetadataFromFilename`, function () {
   const tests = [
