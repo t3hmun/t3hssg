@@ -1,8 +1,6 @@
-const metadataRegex = new RegExp(
-  /(?<year>\d\d\d\d)-(?<month>\d\d)-(?<day>\d\d)(-(?<time>\d\d\d\d))?-(?<title>.+)\.md/
-);
-
+const metadataRegex = /(?<year>\d\d\d\d)-(?<month>\d\d)-(?<day>\d\d)(-(?<time>\d\d\d\d))?-(?<title>.+)\.md/;
 module.exports.extractMetadataFromFileName = (fileName) => {
+  metadataRegex.lastIndex = 0;
   const rgxResult = metadataRegex.exec(fileName);
   if (rgxResult === null)
     throw new Error(`Filename ${fileName} did not match metadata regex.`);
