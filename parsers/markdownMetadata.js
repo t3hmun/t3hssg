@@ -16,11 +16,11 @@ module.exports.extractMarkdownMetadata = (markdown) => {
   if (h1 !== null) {
     descirptionWithH1Regex.lastIndex = 0;
     const result = descirptionWithH1Regex.exec(markdown);
-    description = result?.groups?.description ?? null;
+    description = result?.groups?.description?.trim() ?? null;
   } else {
     descriptionNoH1.lastIndex = 0;
     const result = descriptionNoH1.exec(markdown);
-    description = result?.groups?.description ?? null;
+    description = result?.groups?.description?.trim() ?? null;
   }
 
   const metadata = {

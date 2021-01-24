@@ -70,7 +70,7 @@ describe(`markdownMetadata extractMarkdownMetadata H1 and description`, function
       markdown: "# Test\n\ncontent\n\n## h2",
       expected: {
         title: "Test",
-        description: "\ncontent\n",
+        description: "content",
       },
     },
     {
@@ -78,7 +78,7 @@ describe(`markdownMetadata extractMarkdownMetadata H1 and description`, function
       markdown: "# Test\n\ncontent\n\n\n\n## h2",
       expected: {
         title: "Test",
-        description: "\ncontent\n\n\n",
+        description: "content",
       },
     },
     {
@@ -86,7 +86,7 @@ describe(`markdownMetadata extractMarkdownMetadata H1 and description`, function
       markdown: "# Test\r\n\r\ncontent\r\n\r\n## h2",
       expected: {
         title: "Test",
-        description: "\r\ncontent\r\n",
+        description: "content",
       },
     },
     {
@@ -95,7 +95,7 @@ describe(`markdownMetadata extractMarkdownMetadata H1 and description`, function
         "# Test\n\ncontent\n\n## h2\nMore stuff\n\n## h2\n\neven more content",
       expected: {
         title: "Test",
-        description: "\ncontent\n",
+        description: "content",
       },
     },
     {
@@ -104,7 +104,7 @@ describe(`markdownMetadata extractMarkdownMetadata H1 and description`, function
         "# Test\r\n\r\ncontent\r\n\r\n## h2\r\nMore stuff\r\n\r\n## h2\r\n\r\neven more content",
       expected: {
         title: "Test",
-        description: "\r\ncontent\r\n",
+        description: "content",
       },
     },
     {
@@ -112,7 +112,7 @@ describe(`markdownMetadata extractMarkdownMetadata H1 and description`, function
       markdown: "# Test Header\n\n some content\n\n## h2",
       expected: {
         title: "Test Header",
-        description: "\n some content\n",
+        description: "some content",
       },
     },
     {
@@ -121,13 +121,38 @@ describe(`markdownMetadata extractMarkdownMetadata H1 and description`, function
         "\n> Some comment about stuff\n\n# Test Header\n\n content\n\n## h2",
       expected: {
         title: "Test Header",
-        description: "\n content\n",
+        description: "content",
       },
     },
   ];
 
   tests.forEach((test) => {
     it(`parse ${test.description}`, function () {
+      const actual = markdownMetadata.extractMarkdownMetadata(test.markdown);
+      actual.should.eql(test.expected);
+    });
+  });
+});
+
+describe(`markdownMetadata extractMarkdownMetadata Description with no H1`, () => {
+  const tests = [
+    {
+      description: "One word description",
+      markdown: "hi\n## h2",
+      expected: { title: null, description: "hi" },
+    },
+    {
+      description: "Muliline description",
+      markdown: "hi\nthis is a \nmany line\ndescription\n## h2",
+      expected: {
+        title: null,
+        description: "hi\nthis is a \nmany line\ndescription",
+      },
+    },
+  ];
+
+  tests.forEach((test) => {
+    it(`parse ${test.description}`, () => {
       const actual = markdownMetadata.extractMarkdownMetadata(test.markdown);
       actual.should.eql(test.expected);
     });
