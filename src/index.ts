@@ -7,10 +7,16 @@
  */
 
 import { readAllFilesInDir } from "./util/t3hfs";
-import { extractAndCombineMetadata } from "./parsers/allMetadata";
-import { join } from "path";
-import { createTocPageHtml, createArticlePageHtml } from "./templates/template";
-import { metadataMarkdownToHtmlAndText } from "./parsers/md";
+import { CombinedMetadata, extractAndCombineMetadata } from "./parsers/allMetadata";
+import { join, resolve } from "path";
+import {
+  createTocPageHtml,
+  createArticlePageHtml,
+  MenuItems,
+  PageModel,
+} from "./templates/template";
+import { HtmlTextMetadata, metadataMarkdownToHtmlAndText } from "./parsers/md";
+import { readFileSync } from "fs";
 
 process.on("unhandledRejection", (err) => {
   throw err;
@@ -21,29 +27,59 @@ const defaultTemplatesDir = join(projectDir, "templates");
 
 const inputs = {
   articleMdDir: `../posts`, // This assumes you have a posts folder/repo checked out besides this project.
-  articleTemplate: join(defaultTemplatesDir, "article.mustache"),
-  tocTemplate: join(defaultTemplatesDir, "toc.mustache"),
+  articleTemplatePath: join(defaultTemplatesDir, "article.mustache"),
+  tocTemplatePath: join(defaultTemplatesDir, "toc.mustache"),
+  pageTemplatePath: join(defaultTemplatesDir, "page.mustache"),
 };
 
-// This doesn't need ot be *all* files, could be changed files.
-const readEditedFilesPromise = readAllFilesInDir(inputs.articleMdDir);
+interface Config {
+  siteTitle: string;
+  menu: MenuItems[];
+  // Maybe paths+titles to the body for other pages like about/contact?
+}
 
-readEditedFilesPromise
-  .then((files) =>
-    files.map((file) => ({
-      file: file,
-      metadata: extractAndCombineMetadata(file.name, file.data),
-    }))
-  )
-  .then((mdWithMetadata) => {
-    mdWithMetadata.map((mwm) => {
-      return { ...metadataMarkdownToHtmlAndText(mwm.metadata), ...mwm };
-    });
-  })
-  .then((htmlWithMetadata) => {
-    // TODO: send metadata to TOC builder (probably a template)
-    // TODO: send metadata to template engine
-  })
-  .catch((err) => {
-    throw err;
-  });
+const config: Config = {
+  // TODO: url prefixing
+  siteTitle: "t3hsite",
+  menu: [
+    { text: "home", url: "/" },
+    { text: "GitHub", url: "https://github.com/t3hmun" },
+  ],
+};
+
+everything();
+
+// This doesn't need ot be *all* files, could be changed files.
+async function everything() {
+  const articleTemplate = readFileSync(inputs.articleTemplatePath, "utf-8");
+  const tocTemplate = readFileSync(inputs.tocTemplatePath, "utf-8");
+  const pageTemplate = readFileSync(inputs.pageTemplatePath, "utf-8");
+
+  const articleFiles = await readAllFilesInDir(inputs.articleMdDir);
+
+  const combinedMetadatas = articleFiles.map((file) =>
+    extractAndCombineMetadata(file.name, file.data)
+  );
+
+  const combinedMetadataHtmlTexts: (CombinedMetadata & HtmlTextMetadata)[] = combinedMetadatas.map(
+    (c) => {
+      return { ...metadataMarkdownToHtmlAndText(c), ...c };
+    }
+  );
+
+  const pageModel: PageModel = {
+    menuItems: config.menu,
+    siteTitle: config.siteTitle,
+  };
+
+  const tocPage = createTocPageHtml(
+    pageTemplate,
+    tocTemplate,
+    pageModel,
+    combinedMetadataHtmlTexts
+  );
+
+  const articlePages = combinedMetadataHtmlTexts.map((c) =>
+    createArticlePageHtml(pageTemplate, articleTemplate, pageModel, c)
+  );
+}

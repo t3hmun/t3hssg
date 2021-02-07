@@ -13,12 +13,15 @@ export interface TocEntry {
 }
 
 export interface PageModel {
-  title: string;
-  heading: string;
+  siteTitle: string;
   menuItems: MenuItems[];
 }
 
-export interface CompletePageModel extends PageModel {
+interface AlmostCompletePageModel extends PageModel {
+  title: string;
+}
+
+interface CompletePageModel extends AlmostCompletePageModel {
   bodyHtml: string;
 }
 
@@ -30,15 +33,16 @@ export interface MenuItems {
 function applyTemplate<TBodyModel>(
   pageTemplate: string,
   bodyTemplate: string,
-  pageModel: PageModel,
+  pageModel: AlmostCompletePageModel,
   bodyModel: TBodyModel
 ) {
   const bodyHtml = mustache.render(bodyTemplate, bodyModel);
-  const complatePageModel: CompletePageModel = { bodyHtml, ...pageModel };
-  const pageHtml = mustache.render(pageTemplate, complatePageModel);
+  const completePageModel: CompletePageModel = { bodyHtml, ...pageModel };
+  const pageHtml = mustache.render(pageTemplate, completePageModel);
   return pageHtml;
 }
 
+/** Toc page, which is currenly hardcoded as homepage. Also lacks paging. */
 export function createTocPageHtml(
   pageTemplate: string,
   tocTemplate: string,
@@ -52,7 +56,12 @@ export function createTocPageHtml(
       descriptionHtml: m.descriptionHtml,
     })),
   };
-  const page = applyTemplate(pageTemplate, tocTemplate, pageModel, tocModel);
+  const page = applyTemplate(
+    pageTemplate,
+    tocTemplate,
+    { ...pageModel, title: `Home - ${pageModel.siteTitle}` },
+    tocModel
+  );
   return page;
 }
 
@@ -67,6 +76,11 @@ export function createArticlePageHtml(
     ...metadata,
   };
 
-  const page = applyTemplate(pageTemplate, articleTemplate, pageModel, articleModel);
+  const page = applyTemplate(
+    pageTemplate,
+    articleTemplate,
+    { ...pageModel, title: `${metadata.titleText} - ${pageModel.siteTitle}` },
+    articleModel
+  );
   return page;
 }
