@@ -1,0 +1,6 @@
+{
+  //https://www.npmjs.com/package/@tsconfig/node14
+  "extends": "@tsconfig/node14/tsconfig.json",
+  "rootDir": "./src",
+  "outDir": "./build"
+}
