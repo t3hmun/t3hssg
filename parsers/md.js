@@ -1,5 +1,6 @@
 const MarkdownIt = require("markdown-it");
 const hljs = require("highlight.js");
+const stripHtml = require("string-strip-html");
 
 const defaultMdIt = configureMarkdownIt();
 
@@ -35,4 +36,21 @@ function configureMarkdownIt() {
 module.exports.convertToHtml = (md) => {
   const html = defaultMdIt.render(md);
   return html;
+};
+
+module.exports.metadataMarkdownToHtmlAndText = (metadata) => {
+  const articleHtml = md.convertToHtml(metadata.markdown);
+  const titleHtml = md.convertToHtml(metadata.titleMarkdown);
+  const descriptionHtml = md.convertToHtml(metadata.descriptionMarkdown);
+
+  const titleText = stripHtml(titleHtml).result;
+  const descriptionText = stripHtml(descriptionHtml).result;
+
+  return {
+    articleHtml,
+    titleHtml,
+    descriptionHtml,
+    titleText,
+    descriptionText,
+  };
 };

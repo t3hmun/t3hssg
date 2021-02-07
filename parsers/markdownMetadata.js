@@ -25,6 +25,7 @@ module.exports.extractMarkdownMetadata = (markdown) => {
 
   const metadata = {
     title: h1,
+    h1Missing: h1 === null,
     description: description,
   };
   return metadata;
