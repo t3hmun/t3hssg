@@ -6,56 +6,43 @@
   It should be possible to transpose this structure on to a version with file watchers for auto upadate or a CI system or web functions.
  */
 
-import t3hfs from "./util/t3hfs.js";
-import metadataParser from "./parsers/allMetadata.js";
-import path from "path";
-import md from "./parsers/md.js";
-import template from "./templates/template.js";
+import { readAllFilesInDir } from "./util/t3hfs";
+import { extractAndCombineMetadata } from "./parsers/allMetadata";
+import { join } from "path";
+import { createTocPageHtml, createArticlePageHtml } from "./templates/template";
+import { metadataMarkdownToHtmlAndText } from "./parsers/md";
 
 process.on("unhandledRejection", (err) => {
   throw err;
 });
 
 const projectDir = __dirname;
-const defaultTemplatesDir = path.join(projectDir, "templates");
+const defaultTemplatesDir = join(projectDir, "templates");
 
 const inputs = {
   articleMdDir: `../posts`, // This assumes you have a posts folder/repo checked out besides this project.
-  articleTemplate: path.join(defaultTemplatesDir, "article.mustache"),
-  tocTemplate: path.join(defaultTemplatesDir, "toc.mustache"),
+  articleTemplate: join(defaultTemplatesDir, "article.mustache"),
+  tocTemplate: join(defaultTemplatesDir, "toc.mustache"),
 };
 
 // This doesn't need ot be *all* files, could be changed files.
-const readEditedFilesPromise = t3hfs.readAllFilesInDir(articleMdDir);
+const readEditedFilesPromise = readAllFilesInDir(inputs.articleMdDir);
 
 readEditedFilesPromise
   .then((files) =>
     files.map((file) => ({
       file: file,
-      metadata: metadataParser.extractAndCombineMetadata(file.name, file.data),
+      metadata: extractAndCombineMetadata(file.name, file.data),
     }))
   )
   .then((mdWithMetadata) => {
     mdWithMetadata.map((mwm) => {
-      return { ...md.metadataMarkdownToHtmlAndText(mwm), ...mwm };
+      return { ...metadataMarkdownToHtmlAndText(mwm.metadata), ...mwm };
     });
   })
   .then((htmlWithMetadata) => {
     // TODO: send metadata to TOC builder (probably a template)
     // TODO: send metadata to template engine
-    const tocPage = template.applyTemplate(inputs.tocTemplate, {
-      pageTitle: "t3hweb",
-      entries: htmlWithMetadata.map((hwm) => ({
-        headTitle: hwm.titleText,
-        needsH1: !hwm.h1missing,
-        h1TitleHtml: hwm.titleHtml,
-        articleHtml: hwm.articleHtml,
-      })),
-    });
-
-    const articles = template.applyTemplate(inputs.articleTemplate, {
-      headTitle: `article.web`,
-    });
   })
   .catch((err) => {
     throw err;
