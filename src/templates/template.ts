@@ -3,13 +3,13 @@ import { CombinedMetadata } from "../parsers/allMetadata";
 import { HtmlTextMetadata } from "../parsers/md";
 
 export interface TocModel {
-  pageTitle: string;
   entries: TocEntry[];
 }
 
 export interface TocEntry {
   titleHtml: string;
   titleText: string;
+  descriptionHtml?: string;
 }
 
 export interface PageModel {
@@ -27,7 +27,7 @@ export interface MenuItems {
   url: string;
 }
 
-export function applyTemplate<TBodyModel>(
+function applyTemplate<TBodyModel>(
   pageTemplate: string,
   bodyTemplate: string,
   pageModel: PageModel,
@@ -39,13 +39,34 @@ export function applyTemplate<TBodyModel>(
   return pageHtml;
 }
 
-export function applyTocTemplate(
+export function createTocPageHtml(
   pageTemplate: string,
   tocTemplate: string,
   pageModel: PageModel,
-  metadata: (CombinedMetadata & HtmlTextMetadata)[]
+  metadata: (HtmlTextMetadata | TocEntry)[]
 ) {
   const tocModel: TocModel = {
-    entries: metadata.map((m) => ({})),
+    entries: metadata.map((m) => ({
+      titleHtml: m.titleHtml,
+      titleText: m.titleText,
+      descriptionHtml: m.descriptionHtml,
+    })),
   };
+  const page = applyTemplate(pageTemplate, tocTemplate, pageModel, tocModel);
+  return page;
+}
+
+export function createArticlePageHtml(
+  pageTemplate: string,
+  articleTemplate: string,
+  pageModel: PageModel,
+  metadata: CombinedMetadata & HtmlTextMetadata
+): string {
+  const articleModel = {
+    needsH1: !metadata.h1Missing,
+    ...metadata,
+  };
+
+  const page = applyTemplate(pageTemplate, articleTemplate, pageModel, articleModel);
+  return page;
 }
