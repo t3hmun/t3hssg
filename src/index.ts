@@ -58,6 +58,7 @@ async function everything() {
   const articleFiles = await readAllFilesInDir(inputs.articleMdDir);
 
   const combinedMetadatas = articleFiles.map((file) =>
+    // TODO: probably pass baseUrl into here, then have safePageName and full url as metadata props.
     extractAndCombineMetadata(file.name, file.data)
   );
 
@@ -66,6 +67,8 @@ async function everything() {
       return { ...metadataMarkdownToHtmlAndText(c), ...c };
     }
   );
+
+  // TODO: writeout metadata.
 
   const pageModel: PageModel = {
     menuItems: config.menu,
@@ -76,10 +79,15 @@ async function everything() {
     pageTemplate,
     tocTemplate,
     pageModel,
-    combinedMetadataHtmlTexts
+    combinedMetadataHtmlTexts, // TODO: Sort this metadata by date.
+    `TODO: Figure out where url gen goes`
   );
+
+  // TODO write toc page
 
   const articlePages = combinedMetadataHtmlTexts.map((c) =>
     createArticlePageHtml(pageTemplate, articleTemplate, pageModel, c)
   );
+
+  // TODO write article pages.
 }

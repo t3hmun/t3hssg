@@ -1,6 +1,7 @@
 import mustache from "mustache";
 import { CombinedMetadata } from "../parsers/allMetadata";
 import { HtmlTextMetadata } from "../parsers/md";
+import { format, formatISO } from "date-fns";
 
 export interface TocModel {
   entries: TocEntry[];
@@ -10,6 +11,9 @@ export interface TocEntry {
   titleHtml: string;
   titleText: string;
   descriptionHtml?: string;
+  dateFormatted: string;
+  isoTime: string;
+  url: string;
 }
 
 export interface PageModel {
@@ -47,13 +51,17 @@ export function createTocPageHtml(
   pageTemplate: string,
   tocTemplate: string,
   pageModel: PageModel,
-  metadata: (HtmlTextMetadata | TocEntry)[]
+  metadata: (CombinedMetadata & HtmlTextMetadata)[],
+  url: string
 ) {
   const tocModel: TocModel = {
     entries: metadata.map((m) => ({
       titleHtml: m.titleHtml,
       titleText: m.titleText,
       descriptionHtml: m.descriptionHtml,
+      dateFormatted: format(m.date, "do LLLL y"),
+      isoTime: formatISO(m.date),
+      url: url,
     })),
   };
   const page = applyTemplate(
@@ -71,16 +79,11 @@ export function createArticlePageHtml(
   pageModel: PageModel,
   metadata: CombinedMetadata & HtmlTextMetadata
 ): string {
-  const articleModel = {
-    needsH1: !metadata.h1Missing,
-    ...metadata,
-  };
-
   const page = applyTemplate(
     pageTemplate,
     articleTemplate,
     { ...pageModel, title: `${metadata.titleText} - ${pageModel.siteTitle}` },
-    articleModel
+    metadata
   );
   return page;
 }
