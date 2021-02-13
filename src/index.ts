@@ -6,7 +6,7 @@
   It should be possible to transpose this structure on to a version with file watchers for auto upadate or a CI system or web functions.
  */
 
-import { readAllFilesInDir } from "./util/t3hfs";
+import { readAllFilesInDir, writeAllParallel } from "./util/t3hfs";
 import { CombinedMetadata, extractAndCombineMetadata } from "./parsers/allMetadata";
 import { join, resolve } from "path";
 import {
@@ -16,7 +16,7 @@ import {
   PageModel,
 } from "./templates/template";
 import { HtmlTextMetadata, metadataMarkdownToHtmlAndText } from "./parsers/md";
-import { readFileSync } from "fs";
+import { readFileSync, writeFile } from "fs";
 
 process.on("unhandledRejection", (err) => {
   throw err;
@@ -24,12 +24,19 @@ process.on("unhandledRejection", (err) => {
 
 const projectDir = __dirname;
 const defaultTemplatesDir = join(projectDir, "templates");
+const outputsDir = join(__dirname, "output");
 
 const inputs = {
   articleMdDir: `../posts`, // This assumes you have a posts folder/repo checked out besides this project.
   articleTemplatePath: join(defaultTemplatesDir, "article.mustache"),
   tocTemplatePath: join(defaultTemplatesDir, "toc.mustache"),
   pageTemplatePath: join(defaultTemplatesDir, "page.mustache"),
+};
+
+const outputs = {
+  metadatas: join(outputsDir, "metadata"),
+  articleHtml: join(outputsDir, "articleHtml"),
+  site: join(outputsDir, "site"),
 };
 
 interface Config {
@@ -62,13 +69,23 @@ async function everything() {
     extractAndCombineMetadata(file.name, file.data)
   );
 
+  await writeAllParallel(
+    combinedMetadatas,
+    (m) => `${join(outputs.metadatas, m.fileName)}.json`,
+    (m) => JSON.stringify(m)
+  );
+
   const combinedMetadataHtmlTexts: (CombinedMetadata & HtmlTextMetadata)[] = combinedMetadatas.map(
     (c) => {
       return { ...metadataMarkdownToHtmlAndText(c), ...c };
     }
   );
 
-  // TODO: writeout metadata.
+  await writeAllParallel(
+    combinedMetadataHtmlTexts,
+    (m) => `${join(outputs.articleHtml, m.fileName)}.html`,
+    (m) => JSON.stringify(m)
+  );
 
   const pageModel: PageModel = {
     menuItems: config.menu,
@@ -83,11 +100,20 @@ async function everything() {
     `TODO: Figure out where url gen goes`
   );
 
-  // TODO write toc page
-
-  const articlePages = combinedMetadataHtmlTexts.map((c) =>
-    createArticlePageHtml(pageTemplate, articleTemplate, pageModel, c)
+  await new Promise<void>((resolve, reject) =>
+    writeFile(`${join(outputs.site, "index.html")}`, tocPage, (err) =>
+      err ? reject(err) : resolve()
+    )
   );
 
-  // TODO write article pages.
+  const articlePages = combinedMetadataHtmlTexts.map((c) => ({
+    fileName: c.fileName,
+    html: createArticlePageHtml(pageTemplate, articleTemplate, pageModel, c),
+  }));
+
+  await writeAllParallel(
+    articlePages,
+    (a) => `${join(outputs.site, a.fileName)}`,
+    (a) => a.html
+  );
 }

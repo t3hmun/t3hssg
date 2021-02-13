@@ -8,18 +8,24 @@ export async function readAllFilesInDir(dir: string): Promise<File[]> {
 }
 
 /**
- * Json stingifies and writes each item in an array to file using supplied fuinction to compute filename.
+ * Writes each array item to file using supplied fuinctions to compute filename and contents.
  * Parallel writes should be fast on most systems due to caching and OS magic. Also I hear SSDs can do parallel.
  * Probably bad for large files (>100mb total data i guess?) on a spinning HDD.
+ * @param data - Array of items that contain data to be written to file.
  * @param path - A function that computes the path using the data item.
+ * @param serialise - A function to get a string to write as the file contents.
  * @returns promise, rejects on first fail.
  */
-export async function writeAllParallel<T>(path: (item: T) => string, data: T[]) {
+export async function writeAllParallel<T>(
+  data: T[],
+  path: (item: T) => string,
+  serialise: (item: T) => string
+) {
   await Promise.all(
     data.map(
       (d) =>
         new Promise<void>((resolve, reject) => {
-          fs.writeFile(path(d), JSON.stringify(d), (err) => {
+          fs.writeFile(path(d), serialise(d), (err) => {
             err ? reject(err) : resolve();
           });
         })
