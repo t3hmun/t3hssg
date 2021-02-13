@@ -27,7 +27,7 @@ export function extractMarkdownMetadata(markdown: string): MarkdownMetadata {
 
   const metadata = {
     title: h1,
-    h1Missing: h1 === null,
+    h1Missing: h1 === undefined,
     description: description,
   };
   return metadata;

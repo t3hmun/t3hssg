@@ -20,18 +20,23 @@ export function extractAndCombineMetadata(
   fileName: string,
   fileContents: string
 ): CombinedMetadata {
-  const fileNameMetadata = extractMetadataFromFileName(fileName);
-  const { jsonMetadata, markdown } = extractJsonMetaAndMarkdown(fileContents);
-  const markdownMetadata = extractMarkdownMetadata(markdown);
+  try {
+    const fileNameMetadata = extractMetadataFromFileName(fileName);
+    const { jsonMetadata, markdown } = extractJsonMetaAndMarkdown(fileContents);
+    const markdownMetadata = extractMarkdownMetadata(markdown);
 
-  const metadata = {
-    fileName: fileName,
-    titleMarkdown: jsonMetadata.title ?? markdownMetadata.title ?? fileNameMetadata.title,
-    date: jsonMetadata.date ?? fileNameMetadata.date,
-    descriptionMarkdown: jsonMetadata.description ?? markdownMetadata.description ?? undefined,
-    markdown: markdown,
-    h1Missing: markdownMetadata.h1Missing,
-  };
+    const metadata = {
+      fileName: fileName,
+      titleMarkdown: jsonMetadata.title ?? markdownMetadata.title ?? fileNameMetadata.title,
+      date: jsonMetadata.date ?? fileNameMetadata.date,
+      descriptionMarkdown: jsonMetadata.description ?? markdownMetadata.description ?? undefined,
+      markdown: markdown,
+      h1Missing: markdownMetadata.h1Missing,
+    };
 
-  return metadata;
+    return metadata;
+  } catch (err) {
+    err.message = `In fileName: ${fileName}, ${err.message}`;
+    throw err;
+  }
 }

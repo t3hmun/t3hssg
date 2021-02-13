@@ -19,7 +19,8 @@ export interface HtmlTextMetadata {
 
 export function metadataMarkdownToHtmlAndText(metadata: CombinedMetadata): HtmlTextMetadata {
   const articleHtml = convertToHtml(metadata.markdown);
-  const titleHtml = convertToHtml(metadata.titleMarkdown);
+  // For title we dont want p tags.
+  const titleHtml = convertFragmentToHtml(metadata.titleMarkdown);
   const descriptionHtml = metadata.descriptionMarkdown
     ? convertToHtml(metadata.descriptionMarkdown)
     : undefined;
@@ -38,6 +39,10 @@ export function metadataMarkdownToHtmlAndText(metadata: CombinedMetadata): HtmlT
 
 function convertToHtml(md: string) {
   const html = defaultMdIt.render(md);
+  return html;
+}
+function convertFragmentToHtml(md: string) {
+  const html = defaultMdIt.renderInline(md);
   return html;
 }
 

@@ -16,9 +16,9 @@ export interface JsonMetaAndMd {
 
 export function extractJsonMetaAndMarkdown(fileContents: string): JsonMetaAndMd {
   const jsonEndIndex = findJsonEndIndex(fileContents);
-  const jsonBlock = fileContents.slice(0, jsonEndIndex);
-  const markdown = fileContents.slice(jsonEndIndex);
-  const rawMetadata = JSON.parse(jsonBlock);
+  const jsonBlock = fileContents.slice(0, jsonEndIndex + 1);
+  const markdown = fileContents.slice(jsonEndIndex + 1);
+  const rawMetadata = jsonBlock.length > 0 ? JSON.parse(jsonBlock) : {};
 
   // Blanking out the title is not allowed.
   if (isDefinedAndEmpty(rawMetadata.title)) {
@@ -49,6 +49,8 @@ function findJsonEndIndex(md: string): number {
   let finalBraceIndex = 0;
   let escaped = false;
   let withinQuotes = false;
+
+  if (md[0] !== "{") return -1;
 
   for (let i = 0; i < md.length; i++) {
     const current = md[i];

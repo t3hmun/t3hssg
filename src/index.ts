@@ -22,12 +22,13 @@ process.on("unhandledRejection", (err) => {
   throw err;
 });
 
-const projectDir = __dirname;
-const defaultTemplatesDir = join(projectDir, "templates");
-const outputsDir = join(__dirname, "../output");
+const projDir = process.cwd();
+const srcDir = join(projDir, "src");
+const defaultTemplatesDir = join(srcDir, "templates");
+const outputsDir = join(srcDir, "../output");
 
 const inputs = {
-  articleMdDir: `../posts`, // This assumes you have a posts folder/repo checked out besides this project.
+  articleMdDir: join(srcDir, "../../posts/post"), // This assumes you have a posts folder/repo checked out besides this project.
   articleTemplatePath: join(defaultTemplatesDir, "article.mustache"),
   tocTemplatePath: join(defaultTemplatesDir, "toc.mustache"),
   pageTemplatePath: join(defaultTemplatesDir, "page.mustache"),
@@ -121,7 +122,7 @@ async function everything() {
 
   await writeAllParallel(
     articlePages,
-    (a) => `${join(outputs.site, a.fileName)}`,
+    (a) => `${join(outputs.site, a.fileName)}.html`,
     (a) => a.html
   );
 }
