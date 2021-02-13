@@ -34,6 +34,80 @@ export async function writeAllParallel<T>(
 }
 
 /**
+ * Writes each array item to file using supplied fuinctions to compute filename and contents.
+ * Parallel writes should be fast on most systems due to caching and OS magic. Also I hear SSDs can do parallel.
+ * Probably bad for large files (>100mb total data i guess?) on a spinning HDD.
+ * @param data - Array of items that contain data to be written to file.
+ * @param dirNamer - Function that creatrs a directory name for the file. This will be created if it does not exist.
+ * @param fileNamer - Function that creatrs a file name for the file.
+ * @param serialise - A function to get a string to write as the file contents.
+ * @returns promise, rejects on first fail.
+ */
+export async function writeAllEnsuredParallel<T>(
+  data: T[],
+  dirNamer: (item: T) => string,
+  fileNamer: (item: T) => string,
+  serialise: (item: T) => string
+) {
+  await Promise.all(
+    data.map((d) => {
+      const dirPath = dirNamer(d);
+      const fileName = fileNamer(d);
+      const filePath = path.join(dirPath, fileName);
+      ensureDirCreated(dirPath).then(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            fs.writeFile(filePath, serialise(d), (err) => {
+              err ? reject(err) : resolve();
+            });
+          })
+      );
+    })
+  );
+}
+
+/**
+ * Checks if a dir and its parent dirs exists and creates them if they don't exist.
+ * @param dirPath - The path of the dir.
+ * @returns - And fs error (from fs.stat or fs.mkdir) or void on success.
+ */
+export function ensureDirCreated(dirPath: string) {
+  return new Promise<void>((resolve, reject) => {
+    fs.stat(dirPath, (err) => {
+      if (err) {
+        // ENOENT is the C error for error no entry, which means missing.
+        if (err.code == "ENOENT") {
+          let dirAbove = path.join(dirPath, "../");
+          // Recursively make sure the super-dir exists before creating this one.
+          ensureDirCreated(dirAbove)
+            .then(() => {
+              fs.mkdir(dirPath, 666, (err) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  // Directory created, success.
+                  resolve();
+                  // There is no more code after this point.
+                }
+              });
+            })
+            .catch((err) => {
+              // Error in the recursive call, propagate the error down to the original caller.
+              reject(err);
+            });
+        } else {
+          // Any fs error that isn't ENOENT must be dealt with by the caller.
+          reject(err);
+        }
+      } else {
+        // Directory already exists, success.
+        resolve();
+      }
+    });
+  });
+}
+
+/**
  * Runs fs.stat on every item in dir returning {dir, name, path, stats}[].
  */
 function statDir(dir: string, encoding: BufferEncoding = "utf-8"): Promise<Info[]> {
@@ -62,6 +136,7 @@ function fsreadfileAll(
   i = 0,
   files: File[] = []
 ): void {
+  if (infos.length === 0) resolve(files);
   const currentItem = infos[i];
   if (currentItem.stats.isFile()) {
     fs.readFile(currentItem.path, "utf-8", (err, data) => {

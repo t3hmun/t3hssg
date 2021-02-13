@@ -4,6 +4,7 @@
   "description": "Another static site generator. Again.",
   "main": "index.js",
   "scripts": {
+    "start": "ts-node ./src/index.ts",
     "build": "tsc",
     "test": "mocha"
   },

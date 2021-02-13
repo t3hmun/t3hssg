@@ -6,7 +6,7 @@
   It should be possible to transpose this structure on to a version with file watchers for auto upadate or a CI system or web functions.
  */
 
-import { readAllFilesInDir, writeAllParallel } from "./util/t3hfs";
+import { ensureDirCreated, readAllFilesInDir, writeAllParallel } from "./util/t3hfs";
 import { CombinedMetadata, extractAndCombineMetadata } from "./parsers/allMetadata";
 import { join, resolve } from "path";
 import {
@@ -24,7 +24,7 @@ process.on("unhandledRejection", (err) => {
 
 const projectDir = __dirname;
 const defaultTemplatesDir = join(projectDir, "templates");
-const outputsDir = join(__dirname, "output");
+const outputsDir = join(__dirname, "../output");
 
 const inputs = {
   articleMdDir: `../posts`, // This assumes you have a posts folder/repo checked out besides this project.
@@ -56,6 +56,10 @@ const config: Config = {
 
 everything();
 
+function log(message: string) {
+  console.log(message);
+}
+
 // This doesn't need ot be *all* files, could be changed files.
 async function everything() {
   const articleTemplate = readFileSync(inputs.articleTemplatePath, "utf-8");
@@ -63,12 +67,14 @@ async function everything() {
   const pageTemplate = readFileSync(inputs.pageTemplatePath, "utf-8");
 
   const articleFiles = await readAllFilesInDir(inputs.articleMdDir);
+  log(`Read ${articleFiles.length} article files.`);
 
   const combinedMetadatas = articleFiles.map((file) =>
     // TODO: probably pass baseUrl into here, then have safePageName and full url as metadata props.
     extractAndCombineMetadata(file.name, file.data)
   );
 
+  await ensureDirCreated(outputs.metadatas);
   await writeAllParallel(
     combinedMetadatas,
     (m) => `${join(outputs.metadatas, m.fileName)}.json`,
@@ -81,6 +87,7 @@ async function everything() {
     }
   );
 
+  await ensureDirCreated(outputs.articleHtml);
   await writeAllParallel(
     combinedMetadataHtmlTexts,
     (m) => `${join(outputs.articleHtml, m.fileName)}.html`,
@@ -100,6 +107,7 @@ async function everything() {
     `TODO: Figure out where url gen goes`
   );
 
+  await ensureDirCreated(outputs.site);
   await new Promise<void>((resolve, reject) =>
     writeFile(`${join(outputs.site, "index.html")}`, tocPage, (err) =>
       err ? reject(err) : resolve()
