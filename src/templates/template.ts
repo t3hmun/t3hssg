@@ -32,6 +32,8 @@ interface CompletePageModel extends AlmostCompletePageModel {
 export interface MenuItems {
   text: string;
   url: string;
+  /** Is this the last item. Helps template insert dividers between but not after last item. */
+  last?: boolean;
 }
 
 function applyTemplate<TBodyModel>(

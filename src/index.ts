@@ -43,15 +43,14 @@ const outputs = {
 interface Config {
   siteTitle: string;
   menu: MenuItems[];
-  // Maybe paths+titles to the body for other pages like about/contact?
 }
 
 const config: Config = {
   // TODO: url prefixing
   siteTitle: "t3hsite",
   menu: [
-    { text: "home", url: "/" },
-    { text: "GitHub", url: "https://github.com/t3hmun" },
+    { text: "Home", url: "/" },
+    { text: "GitHub", url: "https://github.com/t3hmun", last: true },
   ],
 };
 

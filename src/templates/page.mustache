@@ -9,13 +9,9 @@
 <header>
     <span class="masthead">{{siteTitle}}</span>
     <nav>
-        <ul>
-            {{#menuItems}}
-            <li>
-                <a href="{{url}}">{{text}}</a>
-            </li>
-            {{/menuItems}}
-        </ul>
+        {{#menuItems}}
+            <a href="{{url}}">{{text}}</a>{{^last}} | {{/last}}
+        {{/menuItems}}
     </nav>
 </header>
 <main>
