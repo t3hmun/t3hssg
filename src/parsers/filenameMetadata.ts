@@ -1,4 +1,5 @@
 const metadataRegex = /(?<year>\d\d\d\d)-(?<month>\d\d)-(?<day>\d\d)(-(?<time>\d\d\d\d))?-(?<title>.+)\.md/;
+const titleValidationRegex = /[^a-zA-Z0-9\-_.~]/g;
 
 export interface FilenameMetadata {
   date: Date;
@@ -22,6 +23,12 @@ export function extractMetadataFromFileName(fileName: string): FilenameMetadata 
     Number(hours),
     Number(minutes)
   );
+  const title = groups.title;
+  if (titleValidationRegex.test(title)) {
+    throw new Error(
+      "Only alphanumeric and .-_~ characters are allowed in the file name. Write the proper heading H1 inside the the article markdown, that is full utf-8."
+    );
+  }
   return {
     date: date,
     title: groups.title,

@@ -48,13 +48,15 @@ function applyTemplate<TBodyModel>(
   return pageHtml;
 }
 
-/** Toc page, which is currenly hardcoded as homepage. Also lacks paging. */
+/**
+ * Toc page, which is currenly hardcoded as homepage. Also lacks paging.
+ */
 export function createTocPageHtml(
   pageTemplate: string,
   tocTemplate: string,
   pageModel: PageModel,
   metadata: (CombinedMetadata & HtmlTextMetadata)[],
-  url: string
+  relativeArticleFolder: string
 ) {
   const tocModel: TocModel = {
     entries: metadata.map((m) => ({
@@ -63,7 +65,7 @@ export function createTocPageHtml(
       descriptionHtml: m.descriptionHtml,
       dateFormatted: format(m.date, "do LLLL y"),
       isoTime: formatISO(m.date),
-      url: url,
+      url: `${relativeArticleFolder}/${m.fileName}`,
     })),
   };
   const page = applyTemplate(

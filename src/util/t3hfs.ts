@@ -1,8 +1,9 @@
 import * as fs from "fs";
+import * as fsp from "fs/promises";
 import * as path from "path";
 
 export async function readAllFilesInDir(dir: string): Promise<File[]> {
-  const infos = await statDir(dir);
+  const infos = await statDirFiles(dir);
   const files = await readAllFiles(infos);
   return files;
 }
@@ -108,13 +109,13 @@ export function ensureDirCreated(dirPath: string) {
 }
 
 /**
- * Runs fs.stat on every item in dir returning {dir, name, path, stats}[].
+ * Runs fs.stat on every item in dir returning {dir, name, path, stats}[]. Ignores sub-sirs.
  */
-function statDir(dir: string, encoding: BufferEncoding = "utf-8"): Promise<Info[]> {
+function statDirFiles(dir: string, encoding: BufferEncoding = "utf-8"): Promise<Info[]> {
   return new Promise((resolve, reject) => {
     fs.readdir(dir, encoding, (err, listing) => {
       if (err) reject(err);
-      else fsstatAll(dir, listing, resolve, reject);
+      else fsstatAllFiles(dir, listing, resolve, reject);
     });
   });
 }
@@ -166,9 +167,9 @@ function fsreadfileAll(
  * @param resolve - resolve function from Promise that you wrapped this in.
  * @param reject - reject function from Promise that you wrapped this in.
  * @param {number} i - Position in listing for next iteration.
- * @param {[]} infos - Array with results, {dir, name, path, stats}, stats beign the fs.stat result.
+ * @param {[]} infos - Array with results, {dir, name, path, stats}, stats being the fs.stat result.
  */
-function fsstatAll(
+function fsstatAllFiles(
   dir: string,
   listing: string[],
   resolve: (info: Info[]) => void,
@@ -186,13 +187,15 @@ function fsstatAll(
         dir: dir,
         name: fileName,
         path: filePath,
+        isFile: stats.isFile(),
+        isDir: stats.isDirectory(),
         stats: stats,
       };
       infos.push(info);
     }
     i++;
     if (i < listing.length) {
-      fsstatAll(dir, listing, resolve, reject, i, infos);
+      fsstatAllFiles(dir, listing, resolve, reject, i, infos);
     } else {
       resolve(infos);
     }
@@ -200,12 +203,57 @@ function fsstatAll(
 }
 
 interface Info {
+  /** The dir that contains the named file or dir. */
   dir: string;
+  /** The name of this file or dir. */
   name: string;
+  /** The full path of this name or dir (is dir and name combined) */
   path: string;
+  /** The full fs.Stats including modification timestamps and size. */
   stats: fs.Stats;
+  /** Is this a file. This is the stats.isFile() result. */
+  isFile: boolean;
+  /** Is this a boolean. This is the stats.isDirectory result. */
+  isDir: boolean;
+}
+
+interface InfoRelative extends Info {
+  baseDir: string;
+  relDir: string;
 }
 
 interface File extends Info {
   data: string;
+}
+
+export async function statFilesInDirOnly(dirPath: string): Promise<Info[]> {
+  const files = await fsp.readdir(dirPath);
+
+  const allStats = await mapAsyncSequential(files, async (fileName) => {
+    const filePath = path.join(dirPath, fileName); //May be a dir.
+    const stats = await fsp.stat(filePath);
+    return { fileName, filePath, stats };
+  });
+
+  return allStats
+    .filter((f) => f.stats.isFile())
+    .map<Info>((f) => ({
+      dir: dirPath,
+      name: f.fileName,
+      path: f.filePath,
+      stats: f.stats,
+      isFile: f.stats.isFile(),
+      isDir: f.stats.isDirectory(),
+    }));
+}
+
+async function mapAsyncSequential<Tin, Tout>(
+  arr: Tin[],
+  func: (item: Tin) => Promise<Tout>
+): Promise<Tout[]> {
+  const ret = [];
+  for (let i = 0; i < arr.length; i++) {
+    ret.push(await func(arr[i]));
+  }
+  return ret;
 }

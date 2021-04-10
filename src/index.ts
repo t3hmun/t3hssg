@@ -38,6 +38,7 @@ const outputs = {
   metadatas: join(outputsDir, "metadata"),
   articleHtml: join(outputsDir, "articleHtml"),
   site: join(outputsDir, "site"),
+  baseUrl: "/",
 };
 
 interface Config {

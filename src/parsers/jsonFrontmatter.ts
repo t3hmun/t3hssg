@@ -5,6 +5,7 @@ export interface JsonMetadata {
   title?: string;
   date?: Date;
   description?: string;
+  link?: string;
 }
 
 export interface JsonMetaAndMd {
@@ -33,6 +34,7 @@ export function extractJsonMetaAndMarkdown(fileContents: string): JsonMetaAndMd 
     title: rawMetadata.title,
     date: rawMetadata.date ? parseISO(rawMetadata.date) : undefined,
     description: rawMetadata.description,
+    link: rawMetadata.linkName,
   };
   return { jsonMetadata, markdown };
 }
